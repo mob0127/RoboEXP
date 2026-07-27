@@ -323,8 +323,8 @@ def _init_low_level_memory(lower_bound, higher_bound, voxel_size, voxel_num):
         return indexes
 
     def index_to_voxel(indexes):
-        if type(indexes) == list:
-            indexes = np.array(indexes)
+        if isinstance(indexes, (list, set, tuple)):
+            indexes = np.array(list(indexes))
         # The index is in numpy array with shape (...,)
         # The voxel is in numpy array with shape (..., 3)
         voxels = np.zeros((indexes.shape + (3,)), dtype=np.int32)

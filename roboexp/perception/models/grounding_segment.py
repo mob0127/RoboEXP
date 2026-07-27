@@ -6,8 +6,8 @@ class MyGroundingSegment:
     def __init__(
         self,
         # Parameters for SAM
-        use_sam_hq=True,
-        sam_checkpoint_path="pretrained_models/sam_vit_h_4b8939.pth",
+        use_sam_hq=False,
+        sam_checkpoint_path="pretrained_models/sam_vit_b_01ec64.pth",
         sam_hq_checkpoint_path="pretrained_models/sam_hq_vit_h.pth",
         # Parameters for GroundingDINO
         config_path="roboexp/perception/models/config/GroundingDINO_SwinT_OGC.py",

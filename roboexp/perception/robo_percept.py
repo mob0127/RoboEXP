@@ -1,4 +1,5 @@
 from .models import MyGroundingSegment, MyDenseClip
+from .pybullet_fallback import PyBulletFallbackDetector
 from roboexp.utils import display_image
 import torch
 
@@ -56,7 +57,8 @@ class RoboPercept:
         # Clean the GPU memory
         if self.lazy_loading:
             del my_grounding_sam
-            torch.cuda.empty_cache()
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
         return pred_boxes, pred_phrases, pred_masks
 
     def get_dense_clip(self, img, boxes, masks, phrases, per_mask=True):
@@ -69,7 +71,8 @@ class RoboPercept:
         # Clean the GPU memory
         if self.lazy_loading:
             del my_dense_clip
-            torch.cuda.empty_cache()
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
         if not per_mask:
             dense_feats, dense_confidences = results 
             return dense_feats.numpy(), dense_confidences.numpy()
@@ -87,5 +90,29 @@ class RoboPercept:
         # Clean the GPU memory
         if self.lazy_loading:
             del my_dense_clipobservations
-            torch.cuda.empty_cache()
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
         return text_feats.numpy()
+
+    def get_attributes_with_fallback(
+        self, observations, fallback_detector, target_labels,
+        replace_existing=False
+    ):
+        """
+        Run the standard GroundingDINO+SAM pipeline, then use the provided
+        fallback detector to fill in any missing target labels.
+
+        This is intended for synthetic PyBullet scenes where the default
+        zero-shot detector may miss texture-less geometric objects.
+
+        .. warning::
+            The fallback detector is PyBullet/simulation-only. Using it on real
+            images will produce meaningless detections because it assumes known
+            rendered colors / body segmentation IDs.
+        """
+        observation_attributes = self.get_attributes_from_observations(observations)
+        fallback_detector.fill_missing_labels(
+            observations, observation_attributes, target_labels,
+            replace_existing=replace_existing
+        )
+        return observation_attributes

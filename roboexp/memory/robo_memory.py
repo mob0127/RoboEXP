@@ -23,6 +23,11 @@ class RoboMemory:
         iou_thres=0.05,
         similarity_thres=0.75,
         base_dir=None,
+        # Options for dynamic object tracking
+        position_association_enabled=False,
+        position_association_threshold=0.5,
+        position_association_min_voxels=10,
+        move_merge_distance_threshold=0.2,
     ):
         # The lower bound and higher bound are the boundaries of the workspace
         # voxel_size is the size of the voxel
@@ -56,6 +61,12 @@ class RoboMemory:
         # Set the instnace merging threshold
         self.iou_thres = iou_thres
         self.similarity_thres = similarity_thres
+
+        # Dynamic object tracking options
+        self.position_association_enabled = position_association_enabled
+        self.position_association_threshold = position_association_threshold
+        self.position_association_min_voxels = position_association_min_voxels
+        self.move_merge_distance_threshold = move_merge_distance_threshold
 
         # The high-level action-conditioned scene graph
         self.action_scene_graph = None
@@ -198,6 +209,7 @@ class RoboMemory:
                         if (
                             other_instance != root_instance
                             and other_instance != instance
+                            and other_instance.instance_id in self.instance_node_mapping.keys()
                         ):
                             other_instance_center = np.mean(
                                 other_instance.index_to_pcd(
@@ -257,7 +269,7 @@ class RoboMemory:
                         self.instance_node_mapping[instance.instance_id] = node.node_id
             # Analyze the attributes of the handles
             for instance in self.memory_instances:
-                if instance.label == "handle":
+                if instance.label == "handle" and instance.instance_id in part_instance_parent:
                     node = self.action_scene_graph.object_nodes[
                         self.instance_node_mapping[instance.instance_id]
                     ]
@@ -522,6 +534,92 @@ class RoboMemory:
                         node.side_direction = joint_info["side_direction"]
                     elif node.joint_type == "prismatic":
                         node.node_label = "drawer_handle"
+        elif scene_graph_option["type"] == "reassociate":
+            # Update existing object nodes and integrate any newly discovered
+            # object-level instances into the existing scene graph.
+            root = self.action_scene_graph.root
+
+            for instance in self.memory_instances:
+                if instance.label not in object_level_labels or instance.label == "table":
+                    continue
+
+                if instance.instance_id in self.instance_node_mapping:
+                    # Existing node: refresh its instance and parent relation.
+                    node_id = self.instance_node_mapping[instance.instance_id]
+                    node = self.action_scene_graph.object_nodes[node_id]
+                    node.update_instance(instance)
+
+                    parent_instance = self._find_parent_surface(
+                        instance, object_level_labels
+                    )
+                    if parent_instance is None:
+                        new_parent = root
+                        parent_relation = "on"
+                    else:
+                        parent_node_id = self.instance_node_mapping[
+                            parent_instance.instance_id
+                        ]
+                        new_parent = self.action_scene_graph.object_nodes[parent_node_id]
+                        parent_relation = "on"
+                    if new_parent.node_id != node.parent.node_id:
+                        node.update_parent(new_parent, parent_relation=parent_relation)
+                else:
+                    # New object-level instance: add it to the graph.
+                    parent_instance = self._find_parent_surface(
+                        instance, object_level_labels
+                    )
+                    if parent_instance is None:
+                        parent_node = root
+                        parent_relation = "on"
+                    else:
+                        parent_node_id = self.instance_node_mapping[
+                            parent_instance.instance_id
+                        ]
+                        parent_node = self.action_scene_graph.object_nodes[parent_node_id]
+                        parent_relation = "on"
+                    node = self.action_scene_graph.add_object(
+                        parent_node,
+                        self._get_node_id(instance.label),
+                        instance.label,
+                        instance,
+                        parent_relation=parent_relation,
+                    )
+                    self.instance_node_mapping[instance.instance_id] = node.node_id
+
+            # Re-analyze handles in case their parent geometry moved.
+            for instance in self.memory_instances:
+                if instance.label == "handle" and instance.instance_id in self.instance_node_mapping:
+                    node = self.action_scene_graph.object_nodes[
+                        self.instance_node_mapping[instance.instance_id]
+                    ]
+                    if node.parent is None:
+                        continue
+                    parent_node = node.parent
+                    sibling_instances = [
+                        child_node.instance
+                        for child_node in parent_node.children.values()
+                        if child_node.node_id != node.node_id
+                    ]
+                    (
+                        node.handle_center,
+                        node.handle_direction,
+                        node.open_direction,
+                        node.joint_type,
+                        joint_info,
+                    ) = self._get_handle_info(
+                        instance,
+                        parent_instance=parent_node.instance,
+                        sibling_instances=sibling_instances,
+                        visualize=False,
+                    )
+                    if node.joint_type == "revolute":
+                        node.node_label = "door_handle"
+                        node.joint_axis = joint_info["joint_axis"]
+                        node.joint_origin = joint_info["joint_origin"]
+                        node.side_direction = joint_info["side_direction"]
+                    elif node.joint_type == "prismatic":
+                        node.node_label = "drawer_handle"
+
         print(self.instance_node_mapping)
 
         print("Visualizing the scene graph")
@@ -535,7 +633,47 @@ class RoboMemory:
                 )
                 if intersection / len(part.voxel_indexes) > 0.2:
                     return instance
+        # Fallback: find the nearest object-level instance by center distance
+        part_center = np.mean(part.index_to_pcd(part.voxel_indexes), axis=0)
+        best_instance = None
+        best_dist = float('inf')
+        for instance in self.memory_instances:
+            if instance.label in object_level_labels:
+                center = np.mean(instance.index_to_pcd(instance.voxel_indexes), axis=0)
+                dist = np.linalg.norm(center - part_center)
+                if dist < best_dist:
+                    best_dist = dist
+                    best_instance = instance
+        if best_instance is not None:
+            print(f"Warning: Cannot find parent object for {part.label}, using nearest {best_instance.label}")
+            return best_instance
         raise ValueError("Cannot find the parent object")
+
+    def _find_parent_surface(self, instance, object_level_labels):
+        """
+        Find the object-level instance that the given instance is resting on.
+        Returns None if no suitable parent is found (fall back to the root).
+        """
+        instance_center = np.mean(
+            instance.index_to_pcd(instance.voxel_indexes), axis=0
+        )
+        best_instance = None
+        best_z = -float("inf")
+        for other in self.memory_instances:
+            if other is instance or other.label not in object_level_labels:
+                continue
+            other_center = np.mean(
+                other.index_to_pcd(other.voxel_indexes), axis=0
+            )
+            if (
+                abs(other_center[0] - instance_center[0]) < 0.1
+                and abs(other_center[1] - instance_center[1]) < 0.1
+                and other_center[2] < instance_center[2]
+                and other_center[2] > best_z
+            ):
+                best_instance = other
+                best_z = other_center[2]
+        return best_instance
 
     def _get_node_id(self, label):
         global node_label_counts
@@ -870,6 +1008,7 @@ class RoboMemory:
             self.memory_scene_avg,
             merged_instances,
             merged_scene,
+            allow_position_association=self.position_association_enabled,
         )
 
         if COUNT_TIME:
@@ -1123,6 +1262,7 @@ class RoboMemory:
         _merged_scene_avg,
         instances,
         scene,
+        allow_position_association=False,
     ):
         # Merge the scene with the merged_scene
         for voxel_index, color in scene.items():
@@ -1139,29 +1279,81 @@ class RoboMemory:
                 )
 
         # Merge the instances with the merged_instances
-        for instance in instances:
+        # First pass: IoU-based matching (original behavior)
+        matched_new = [False] * len(instances)
+        matched_old = [False] * len(merged_instances)
+        for i, instance in enumerate(instances):
             if instance.no_merge:
                 continue
             max_iou = 0
             max_iou_instance = None
-            for merged_instance in merged_instances:
-                if merged_instance.no_merge:
+            for j, merged_instance in enumerate(merged_instances):
+                if merged_instance.no_merge or matched_old[j]:
                     continue
                 iou = instance.get_iou(merged_instance)
                 similarity = instance.get_similarity(merged_instance)
                 if (
                     iou > self.iou_thres
-                    and (
-                        similarity > self.similarity_thres
-                        or instance.label == merged_instance.label
-                    )
+                    and instance.label == merged_instance.label
                     and iou > max_iou
                 ):
                     max_iou = iou
                     max_iou_instance = merged_instance
             if max_iou_instance is not None:
                 max_iou_instance.merge_instance(instance)
-            else:
+                matched_new[i] = True
+                matched_old[merged_instances.index(max_iou_instance)] = True
+
+        # Second pass: position-based association for moved objects
+        if allow_position_association:
+            for i, instance in enumerate(instances):
+                if matched_new[i] or instance.no_merge:
+                    continue
+                if len(instance.voxel_indexes) < self.position_association_min_voxels:
+                    continue
+                instance_center = np.mean(
+                    instance.index_to_pcd(instance.voxel_indexes), axis=0
+                )
+
+                best_dist = self.position_association_threshold
+                best_j = None
+                for j, merged_instance in enumerate(merged_instances):
+                    if (
+                        merged_instance.no_merge
+                        or matched_old[j]
+                        or merged_instance.label != instance.label
+                        or len(merged_instance.voxel_indexes)
+                        < self.position_association_min_voxels
+                    ):
+                        continue
+                    merged_center = np.mean(
+                        merged_instance.index_to_pcd(merged_instance.voxel_indexes),
+                        axis=0,
+                    )
+                    dist = float(np.linalg.norm(merged_center - instance_center))
+                    if dist < best_dist:
+                        best_dist = dist
+                        best_j = j
+
+                if best_j is not None:
+                    old_instance = merged_instances[best_j]
+                    # If the object has moved substantially, replace the old
+                    # voxels rather than unioning them.
+                    if best_dist > self.move_merge_distance_threshold:
+                        # Remove obsolete voxels from the shared scene map
+                        for voxel_index in old_instance.voxel_indexes:
+                            if voxel_index in merged_scene:
+                                del merged_scene[voxel_index]
+                                del _merged_scene_avg[voxel_index]
+                        old_instance.move_instance(instance)
+                    else:
+                        old_instance.merge_instance(instance)
+                    matched_new[i] = True
+                    matched_old[best_j] = True
+
+        # Append remaining unmatched new instances
+        for i, instance in enumerate(instances):
+            if not matched_new[i] and not instance.no_merge:
                 merged_instances.append(instance)
 
         return merged_instances, merged_scene

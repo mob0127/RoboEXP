@@ -23,7 +23,7 @@ class MyCLIP:
 
     def get_image_feature(self, img):
         pil_img = Image.fromarray(img)
-        with torch.no_grad() and torch.cuda.amp.autocast():
+        with torch.no_grad():
             _img = self.preprocess(pil_img).unsqueeze(0)
             img_feature = self.model.encode_image(_img.to(self.device)).detach()
             img_feature /= img_feature.norm(dim=-1, keepdim=True)
@@ -32,7 +32,7 @@ class MyCLIP:
     def get_text_feature(self, texts):
         # texts is a list of strings. Refer to https://github.com/mlfoundations/open_clip
         texts = self.tokenizer(texts)
-        with torch.no_grad() and torch.cuda.amp.autocast():
-            text_features = self.model.encode_text(texts.cuda()).detach()
+        with torch.no_grad():
+            text_features = self.model.encode_text(texts.to(self.device)).detach()
             text_features /= text_features.norm(dim=-1, keepdim=True)
         return text_features

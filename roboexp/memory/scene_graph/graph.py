@@ -100,14 +100,14 @@ class ActionSceneGraph:
                 node_dict["parent"] = node.parent.node_id
             if "handle" in node.node_label:
                 node_dict["is_handle"] = True
-                node_dict["handle_center"] = node.handle_center
-                node_dict["handle_direction"] = node.handle_direction
-                node_dict["open_direction"] = node.open_direction
-                node_dict["joint_type"] = node.joint_type
-                if node.joint_type == "revolute":
-                    node_dict["joint_axis"] = node.joint_axis
-                    node_dict["joint_origin"] = node.joint_origin
-                    node_dict["side_direction"] = node.side_direction
+                node_dict["handle_center"] = getattr(node, "handle_center", None)
+                node_dict["handle_direction"] = getattr(node, "handle_direction", None)
+                node_dict["open_direction"] = getattr(node, "open_direction", None)
+                node_dict["joint_type"] = getattr(node, "joint_type", None)
+                if getattr(node, "joint_type", None) == "revolute":
+                    node_dict["joint_axis"] = getattr(node, "joint_axis", None)
+                    node_dict["joint_origin"] = getattr(node, "joint_origin", None)
+                    node_dict["side_direction"] = getattr(node, "side_direction", None)
             nodes_dict[node_id] = node_dict
             # Add all the action node also into this
             for action_node_id, action_node in node.actions.items():

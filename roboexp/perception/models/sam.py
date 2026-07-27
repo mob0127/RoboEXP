@@ -1,10 +1,12 @@
 from segment_anything import (
     build_sam,
-    build_sam_hq,
+    build_sam_vit_b,
+    build_sam_vit_l,
     SamAutomaticMaskGenerator,
     SamPredictor,
 )
 import torch
+import os
 
 
 # This support both SAM and SAM_HQ
@@ -20,9 +22,17 @@ class MySAM:
         self.device = device
         # Build the model
         if use_sam_hq:
+            from segment_anything import build_sam_hq
             model = build_sam_hq(checkpoint=sam_hq_checkpoint_path)
         else:
-            model = build_sam(checkpoint=sam_checkpoint_path)
+            # Auto-detect SAM variant from checkpoint filename
+            ckpt_name = os.path.basename(sam_checkpoint_path) if sam_checkpoint_path else ""
+            if "vit_b" in ckpt_name.lower():
+                model = build_sam_vit_b(checkpoint=sam_checkpoint_path)
+            elif "vit_l" in ckpt_name.lower():
+                model = build_sam_vit_l(checkpoint=sam_checkpoint_path)
+            else:
+                model = build_sam(checkpoint=sam_checkpoint_path)
         model.to(device)
         # Following the hyperparameters setting from https://github.com/facebookresearch/segment-anything/blob/main/notebooks/automatic_mask_generator_example.ipynb
         # The original ConceptFusion setting focus more on the object level, lack of fine-grained details https://github.com/concept-fusion/concept-fusion/blob/main/examples/extract_conceptfusion_features.py

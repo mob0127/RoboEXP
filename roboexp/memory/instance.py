@@ -40,6 +40,8 @@ class myInstance:
         return intersection / union
 
     def get_similarity(self, instance):
+        if self.feature is None or instance.feature is None:
+            return 0.0
         similarity = (
             np.dot(self.feature, instance.feature)
             / np.linalg.norm(self.feature)
@@ -54,6 +56,23 @@ class myInstance:
         weight = self.confidence / (self.confidence + instance.confidence)
         self.feature = weight * self.feature + (1 - weight) * instance.feature
         self.feature /= np.linalg.norm(self.feature)
+        if self.confidence < instance.confidence:
+            self.label = instance.label
+            self.confidence = instance.confidence
+
+    def move_instance(self, instance):
+        """
+        Replace the voxel set with the new observation's voxels while preserving
+        the instance identity. Used when an object has moved and its old voxels
+        should no longer be part of this instance.
+        """
+        self.voxel_indexes = list(instance.voxel_indexes)
+        if self.feature is not None and instance.feature is not None:
+            weight = self.confidence / (self.confidence + instance.confidence)
+            self.feature = weight * self.feature + (1 - weight) * instance.feature
+            norm = np.linalg.norm(self.feature)
+            if norm > 1e-8:
+                self.feature /= norm
         if self.confidence < instance.confidence:
             self.label = instance.label
             self.confidence = instance.confidence

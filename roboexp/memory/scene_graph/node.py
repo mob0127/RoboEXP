@@ -43,6 +43,17 @@ class ObjectNode(Node):
         self.instance = instance
         self.voxel_indexes = instance.voxel_indexes
 
+    def update_parent(self, new_parent, parent_relation=None):
+        """Move this object node to a new parent in the scene graph."""
+        if self.parent is not None:
+            if self.node_id in self.parent.children:
+                del self.parent.children[self.node_id]
+        self.parent = new_parent
+        if parent_relation is not None:
+            self.parent_relation = parent_relation
+        if new_parent is not None:
+            new_parent.add_child(self)
+
     def delete(self):
         if self.parent:
             del self.parent.children[self.node_id]
