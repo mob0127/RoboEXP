@@ -176,4 +176,7 @@ cython_debug/
 phase0_outputs/
 phase0_outputs_pr2/
 None/
+# Local backups
 txt_file.txt
+archive_backup/
+archive/07_misc/notes/01_txt_file.txt
