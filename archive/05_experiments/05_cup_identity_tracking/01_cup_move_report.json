@@ -1,0 +1,87 @@
+{
+  "initial_cup_position": [
+    0.25,
+    0.0,
+    2.4349999999999996
+  ],
+  "moved_cup_position": [
+    0.6,
+    0.0,
+    1.435
+  ],
+  "viewpoints": [
+    [
+      1.5,
+      0.0,
+      1.8,
+      0,
+      -1.2566370614359172,
+      0
+    ],
+    [
+      1.5,
+      0.8,
+      1.8,
+      0,
+      -1.2566370614359172,
+      0.39269908169872414
+    ],
+    [
+      1.5,
+      -0.8,
+      1.8,
+      0,
+      -1.2566370614359172,
+      -0.39269908169872414
+    ]
+  ],
+  "stages": [
+    {
+      "name": "before_move",
+      "cup_nodes": [
+        {
+          "node_id": "cup_0",
+          "instance_id": "cup_0_instance",
+          "label": "cup",
+          "center": [
+            2.2206,
+            -0.2781,
+            1.0594
+          ],
+          "size": [
+            0.06,
+            0.08,
+            0.06
+          ],
+          "parent": "table_0",
+          "parent_relation": "on"
+        }
+      ]
+    },
+    {
+      "name": "after_move",
+      "cup_nodes": [
+        {
+          "node_id": "cup_0",
+          "instance_id": "cup_0_instance",
+          "label": "cup",
+          "center": [
+            2.1124,
+            0.3966,
+            1.4999
+          ],
+          "size": [
+            0.24,
+            0.96,
+            0.66
+          ],
+          "parent": "table_0",
+          "parent_relation": "on"
+        }
+      ]
+    }
+  ],
+  "num_cup_nodes_before": 1,
+  "num_cup_nodes_after": 1,
+  "identity_preserved": true
+}

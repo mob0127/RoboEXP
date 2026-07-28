@@ -1,3 +1,4 @@
+# Xiao : 新增文件，用于本仓库对上游的扩展。
 """
 Phase 0 Validation with PR2 robot.
 Uses PyBullet joint info to inject handle nodes (bypassing vision).

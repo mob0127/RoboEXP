@@ -40,6 +40,7 @@ class myInstance:
         return intersection / union
 
     def get_similarity(self, instance):
+# Xiao : 新增/修改：以下 2 行为相对 Jianghanxiao/RoboEXP 的改动。
         if self.feature is None or instance.feature is None:
             return 0.0
         similarity = (
@@ -60,6 +61,7 @@ class myInstance:
             self.label = instance.label
             self.confidence = instance.confidence
 
+# Xiao : 新增/修改：以下 17 行为相对 Jianghanxiao/RoboEXP 的改动。
     def move_instance(self, instance):
         """
         Replace the voxel set with the new observation's voxels while preserving

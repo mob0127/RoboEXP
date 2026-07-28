@@ -1,0 +1,16 @@
+{
+  "demo_video": "/home/jx/kitchen/RoboEXP/experiments/outputs/demo/tasks_demo.mp4",
+  "frame_size": [
+    640,
+    480
+  ],
+  "fps": 1,
+  "hold_seconds": 3,
+  "num_scenes": 15,
+  "tasks": {
+    "task1_2": "diagnosed identity-loss bug (voxel IoU = 0 after move)",
+    "task3": "identity preserved via move_instance + reassociate",
+    "task4": "PyBullet color fallback mask for DINO+SAM misses",
+    "task5": "grasp outcomes validated: success / missed / tipped"
+  }
+}

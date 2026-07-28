@@ -23,6 +23,7 @@ class RoboMemory:
         iou_thres=0.05,
         similarity_thres=0.75,
         base_dir=None,
+# Xiao : 新增/修改：以下 5 行为相对 Jianghanxiao/RoboEXP 的改动。
         # Options for dynamic object tracking
         position_association_enabled=False,
         position_association_threshold=0.5,
@@ -62,6 +63,7 @@ class RoboMemory:
         self.iou_thres = iou_thres
         self.similarity_thres = similarity_thres
 
+# Xiao : 新增/修改：以下 6 行为相对 Jianghanxiao/RoboEXP 的改动。
         # Dynamic object tracking options
         self.position_association_enabled = position_association_enabled
         self.position_association_threshold = position_association_threshold
@@ -209,6 +211,7 @@ class RoboMemory:
                         if (
                             other_instance != root_instance
                             and other_instance != instance
+# Xiao : 新增/修改：以下 1 行为相对 Jianghanxiao/RoboEXP 的改动。
                             and other_instance.instance_id in self.instance_node_mapping.keys()
                         ):
                             other_instance_center = np.mean(
@@ -269,6 +272,7 @@ class RoboMemory:
                         self.instance_node_mapping[instance.instance_id] = node.node_id
             # Analyze the attributes of the handles
             for instance in self.memory_instances:
+# Xiao : 新增/修改：以下 1 行为相对 Jianghanxiao/RoboEXP 的改动。
                 if instance.label == "handle" and instance.instance_id in part_instance_parent:
                     node = self.action_scene_graph.object_nodes[
                         self.instance_node_mapping[instance.instance_id]
@@ -534,6 +538,7 @@ class RoboMemory:
                         node.side_direction = joint_info["side_direction"]
                     elif node.joint_type == "prismatic":
                         node.node_label = "drawer_handle"
+# Xiao : 新增/修改：以下 86 行为相对 Jianghanxiao/RoboEXP 的改动。
         elif scene_graph_option["type"] == "reassociate":
             # Update existing object nodes and integrate any newly discovered
             # object-level instances into the existing scene graph.
@@ -633,6 +638,7 @@ class RoboMemory:
                 )
                 if intersection / len(part.voxel_indexes) > 0.2:
                     return instance
+# Xiao : 新增/修改：以下 14 行为相对 Jianghanxiao/RoboEXP 的改动。
         # Fallback: find the nearest object-level instance by center distance
         part_center = np.mean(part.index_to_pcd(part.voxel_indexes), axis=0)
         best_instance = None
@@ -649,6 +655,7 @@ class RoboMemory:
             return best_instance
         raise ValueError("Cannot find the parent object")
 
+# Xiao : 新增/修改：以下 26 行为相对 Jianghanxiao/RoboEXP 的改动。
     def _find_parent_surface(self, instance, object_level_labels):
         """
         Find the object-level instance that the given instance is resting on.
@@ -1008,6 +1015,7 @@ class RoboMemory:
             self.memory_scene_avg,
             merged_instances,
             merged_scene,
+# Xiao : 新增/修改：以下 1 行为相对 Jianghanxiao/RoboEXP 的改动。
             allow_position_association=self.position_association_enabled,
         )
 
@@ -1262,6 +1270,7 @@ class RoboMemory:
         _merged_scene_avg,
         instances,
         scene,
+# Xiao : 新增/修改：以下 1 行为相对 Jianghanxiao/RoboEXP 的改动。
         allow_position_association=False,
     ):
         # Merge the scene with the merged_scene
@@ -1279,6 +1288,7 @@ class RoboMemory:
                 )
 
         # Merge the instances with the merged_instances
+# Xiao : 新增/修改：以下 4 行为相对 Jianghanxiao/RoboEXP 的改动。
         # First pass: IoU-based matching (original behavior)
         matched_new = [False] * len(instances)
         matched_old = [False] * len(merged_instances)
@@ -1287,6 +1297,7 @@ class RoboMemory:
                 continue
             max_iou = 0
             max_iou_instance = None
+# Xiao : 新增/修改：以下 2 行为相对 Jianghanxiao/RoboEXP 的改动。
             for j, merged_instance in enumerate(merged_instances):
                 if merged_instance.no_merge or matched_old[j]:
                     continue
@@ -1294,6 +1305,7 @@ class RoboMemory:
                 similarity = instance.get_similarity(merged_instance)
                 if (
                     iou > self.iou_thres
+# Xiao : 新增/修改：以下 1 行为相对 Jianghanxiao/RoboEXP 的改动。
                     and instance.label == merged_instance.label
                     and iou > max_iou
                 ):
@@ -1301,6 +1313,7 @@ class RoboMemory:
                     max_iou_instance = merged_instance
             if max_iou_instance is not None:
                 max_iou_instance.merge_instance(instance)
+# Xiao : 新增/修改：以下 53 行为相对 Jianghanxiao/RoboEXP 的改动。
                 matched_new[i] = True
                 matched_old[merged_instances.index(max_iou_instance)] = True
 

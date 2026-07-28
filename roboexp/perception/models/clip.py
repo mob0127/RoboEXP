@@ -23,6 +23,7 @@ class MyCLIP:
 
     def get_image_feature(self, img):
         pil_img = Image.fromarray(img)
+# Xiao : 新增/修改：以下 1 行为相对 Jianghanxiao/RoboEXP 的改动。
         with torch.no_grad():
             _img = self.preprocess(pil_img).unsqueeze(0)
             img_feature = self.model.encode_image(_img.to(self.device)).detach()
@@ -32,6 +33,7 @@ class MyCLIP:
     def get_text_feature(self, texts):
         # texts is a list of strings. Refer to https://github.com/mlfoundations/open_clip
         texts = self.tokenizer(texts)
+# Xiao : 新增/修改：以下 2 行为相对 Jianghanxiao/RoboEXP 的改动。
         with torch.no_grad():
             text_features = self.model.encode_text(texts.to(self.device)).detach()
             text_features /= text_features.norm(dim=-1, keepdim=True)

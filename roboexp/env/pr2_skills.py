@@ -1,3 +1,4 @@
+# Xiao : 新增文件，用于本仓库对上游的扩展。
 """
 Reusable PR2 motion primitives for TAMP execution in PyBullet/kitchen-worlds.
 
@@ -13,10 +14,10 @@ import pybullet as p
 
 from pybullet_tools.utils import (
     PI, get_pose, get_link_pose, point_from_pose, Pose, Point,
-    multiply, link_from_name, get_camera_matrix
+    multiply, link_from_name, get_camera_matrix, get_closest_points
 )
 from pybullet_tools.pr2_utils import (
-    set_group_conf, get_arm_joints, set_arm_conf, open_arm, close_arm,
+    set_group_conf, get_arm_joints, get_gripper_joints, set_arm_conf, open_arm, close_arm,
     PR2_TOOL_FRAMES, SIDE_HOLDING_LEFT_ARM
 )
 from world_builder.entities import StaticCamera
@@ -173,6 +174,218 @@ def compute_tool_offset(env):
 # ---------------------------------------------------------------------------
 # Arm and gripper
 # ---------------------------------------------------------------------------
+
+def move_arm_via_conf(env, target_conf, via_conf, steps=10, sub_steps=10):
+    """Move the left arm through an intermediate ``via_conf`` to avoid sweeping
+    through obstacles on the counter.
+
+    The path is current -> via_conf -> target_conf.  Each segment uses the
+    same small interpolation steps as ``move_arm_to_conf``.  Keeping the via
+    pose high above the counter keeps the arm clear of objects while it
+    transitions between workspace regions.
+    """
+    move_arm_to_conf(env, via_conf, steps=steps, sub_steps=sub_steps)
+    move_arm_to_conf(env, target_conf, steps=steps, sub_steps=sub_steps)
+
+
+def _arm_joint_values(env):
+    arm_joints = get_arm_joints(env.robot.body, ARM)
+    return [p.getJointState(env.robot.body, j)[0] for j in arm_joints]
+
+
+def _set_arm_conf_safe(env, conf):
+    """Set arm configuration for geometric checks (no physics stepping)."""
+    set_arm_conf(env.robot.body, ARM, conf)
+
+
+def _protected_body_for_clearance(env):
+    """Return the body we must not hit while moving the free arm.
+
+    For now this is the currently grasped cup if any, because the planner's
+    certifies grasps and we want to avoid sweeping against it while the arm is
+    still free.  Callers can override by passing ``protected_body`` explicitly.
+    """
+    return getattr(env, "grasped_body", None)
+
+
+def _min_link_clearance(env, protected_body, max_distance=0.05, exclude_gripper=True):
+    """Minimum distance between any robot arm/gripper link and ``protected_body``.
+
+    Returns a float.  Positive means separation, negative means penetration.
+    ``max_distance`` caps the search range; if no pair is closer than this,
+    ``max_distance`` is returned.  Arm links plus gripper finger links are
+    checked so that the open fingers cannot sweep the object while the arm is
+    moving.
+    """
+    if protected_body is None:
+        return float("inf")
+    robot = env.robot.body
+    arm_joints = get_arm_joints(env.robot.body, ARM)
+    gripper_joints = get_gripper_joints(env.robot.body, ARM)
+    # For non-base links in PyBullet URDFs, the link index equals the joint index.
+    links = list(arm_joints) + list(gripper_joints)
+    tool_link = link_from_name(robot, PR2_TOOL_FRAMES[ARM]) if exclude_gripper else None
+    min_dist = max_distance
+    for link in links:
+        if exclude_gripper and link == tool_link:
+            continue
+        contacts = get_closest_points(robot, protected_body, link1=link, max_distance=max_distance)
+        for c in contacts:
+            if c.contactDistance < min_dist:
+                min_dist = c.contactDistance
+    return min_dist
+
+
+def _is_joint_path_clear(env, q1, q2, protected_body, margin, steps=10):
+    """Check whether a linear joint-space interpolation stays ``margin`` clear.
+
+    The current arm configuration is saved and restored so the check is side-effect
+    free.  All intermediate points must keep at least ``margin`` clearance; the
+    final target point is allowed to be close (e.g. a pre-grasp pose) but must
+    not penetrate.
+    """
+    if protected_body is None or protected_body == getattr(env, "grasped_body", None):
+        return True
+    arm_joints = get_arm_joints(env.robot.body, ARM)
+    saved = _arm_joint_values(env)
+    clear = True
+    min_dist = float("inf")
+    search_distance = max(0.05, margin + 0.02)
+    for i in range(steps + 1):
+        alpha = i / steps
+        conf = [q1[j] * (1 - alpha) + q2[j] * alpha for j in range(7)]
+        _set_arm_conf_safe(env, conf)
+        d = _min_link_clearance(env, protected_body, max_distance=search_distance)
+        min_dist = min(min_dist, d)
+        if i < steps:
+            if d < margin:
+                clear = False
+                break
+        else:
+            # Final pose may be intentionally close (pre-grasp).  Penetration
+            # is still forbidden.
+            if d < -0.005:
+                clear = False
+                break
+    set_arm_conf(env.robot.body, ARM, saved)
+    return clear
+
+
+def _random_joint_perturbation(q, rng, scale=0.15):
+    """Perturb a 7-DOF arm configuration, biasing the shoulder/elbow upward."""
+    perturbed = list(q)
+    # Shoulder lift and elbow flex are the main elevation DOFs.  More negative
+    # shoulder lift generally raises the arm; more negative elbow flex folds it
+    # up.  We sample a symmetric window and let the clearance test pick the best.
+    perturbed[1] += rng.uniform(-scale, scale)      # shoulder lift
+    perturbed[3] += rng.uniform(-scale, scale)      # elbow flex
+    perturbed[0] += rng.uniform(-0.08, 0.08)        # shoulder pan
+    perturbed[2] += rng.uniform(-0.10, 0.10)        # upper arm roll
+    perturbed[4] += rng.uniform(-0.10, 0.10)        # forearm roll
+    perturbed[5] += rng.uniform(-0.08, 0.08)        # wrist flex
+    perturbed[6] += rng.uniform(-0.15, 0.15)        # wrist roll
+    return perturbed
+
+
+def _search_safe_via_configuration(env, q1, q2, protected_body, margin, attempts=30):
+    """Search for an intermediate arm configuration that yields a clear two-segment path.
+
+    We sample perturbations along the straight-line joint path between ``q1`` and
+    ``q2`` and keep the candidate with the largest clearance for both
+    ``q1->candidate`` and ``candidate->q2``.  If none beats ``margin``, return
+    None.
+    """
+    if protected_body is None or protected_body == getattr(env, "grasped_body", None):
+        return None
+    rng = np.random.RandomState(0)
+    best_via = None
+    best_score = -float("inf")
+    for _ in range(attempts):
+        t = rng.uniform(0.25, 0.75)
+        base_via = [q1[j] * (1 - t) + q2[j] * t for j in range(7)]
+        via = _random_joint_perturbation(base_via, rng, scale=0.20)
+        # Quick feasibility: check self clearance at the via pose first.
+        _set_arm_conf_safe(env, via)
+        via_clear = _min_link_clearance(env, protected_body, max_distance=0.08)
+        if via_clear < margin:
+            continue
+        seg1_clear = _is_joint_path_clear(env, q1, via, protected_body, margin, steps=8)
+        if not seg1_clear:
+            continue
+        seg2_clear = _is_joint_path_clear(env, via, q2, protected_body, margin, steps=8)
+        if not seg2_clear:
+            continue
+        score = min(via_clear, margin + 0.01)
+        if score > best_score:
+            best_score = score
+            best_via = via
+    if best_via is not None:
+        return best_via
+    # Last resort: try a strongly elevated midpoint (shoulder up, elbow folded).
+    elevated = [q1[j] * 0.5 + q2[j] * 0.5 for j in range(7)]
+    elevated[1] -= 0.35
+    elevated[3] -= 0.35
+    elevated[5] -= 0.15
+    _set_arm_conf_safe(env, elevated)
+    if _min_link_clearance(env, protected_body, max_distance=0.08) >= margin:
+        if _is_joint_path_clear(env, q1, elevated, protected_body, margin, steps=8) and \
+           _is_joint_path_clear(env, elevated, q2, protected_body, margin, steps=8):
+            return elevated
+    return None
+
+
+def move_arm_to_conf_safe(env, target_conf, protected_body=None, margin=0.05,
+                          steps=12, sub_steps=10):
+    """Move the left arm to ``target_conf`` while keeping a clearance margin.
+
+    If ``protected_body`` is None, the currently grasped body is used when
+    relevant (a grasped body is skipped because it is rigidly attached to the
+    gripper).  The function first checks the straight-line joint path; if the
+    predicted minimum clearance is below ``margin`` it searches for a safe via
+    configuration in joint space.  If no safe via exists, the motion is executed
+    very slowly with collision monitoring as a final fallback.
+    """
+    if protected_body is None:
+        protected_body = _protected_body_for_clearance(env)
+    # If the protected body is grasped, the fixed constraint handles it; just
+    # execute normally, but still avoid other objects via the same path logic.
+    if protected_body is not None and protected_body == getattr(env, "grasped_body", None):
+        protected_body = None
+    arm_joints = get_arm_joints(env.robot.body, ARM)
+    current_conf = [p.getJointState(env.robot.body, j)[0] for j in arm_joints]
+    if _is_joint_path_clear(env, current_conf, target_conf, protected_body, margin, steps=20):
+        move_arm_to_conf(env, target_conf, steps=steps, sub_steps=sub_steps)
+        return
+    via = _search_safe_via_configuration(env, current_conf, target_conf, protected_body, margin)
+    if via is not None:
+        move_arm_to_conf(env, via, steps=steps, sub_steps=sub_steps)
+        move_arm_to_conf(env, target_conf, steps=steps, sub_steps=sub_steps)
+        return
+    # Fallback: slow guarded execution.  We stop early if the body is hit.
+    print(f"[WARN] No safe via found; executing guarded slow motion (margin={margin})")
+    cur = current_conf
+    for i in range(1, steps * 3 + 1):
+        alpha = i / (steps * 3)
+        interp = [cur[j] * (1 - alpha) + target_conf[j] * alpha for j in range(7)]
+        set_arm_conf(env.robot.body, ARM, interp)
+        for _ in range(sub_steps):
+            p.stepSimulation()
+        if getattr(env, "grasped_body", None) is not None:
+            sync_attached_cup(env)
+        d = _min_link_clearance(env, protected_body, max_distance=margin + 0.02)
+        if d < -0.005:
+            print(f"[WARN] Contact detected ({d:.4f} m); stopping arm motion")
+            break
+
+
+def move_arm_via_conf_safe(env, target_conf, via_conf, protected_body=None,
+                           margin=0.05, steps=12, sub_steps=10):
+    """Two-segment arm motion with clearance margin on both segments."""
+    move_arm_to_conf_safe(env, via_conf, protected_body=protected_body,
+                          margin=margin, steps=steps, sub_steps=sub_steps)
+    move_arm_to_conf_safe(env, target_conf, protected_body=protected_body,
+                          margin=margin, steps=steps, sub_steps=sub_steps)
+
 
 def move_arm_to_conf(env, target_conf, steps=10, sub_steps=10):
     """Interpolate the left arm joint positions and step the simulation.

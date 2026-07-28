@@ -100,6 +100,7 @@ class ActionSceneGraph:
                 node_dict["parent"] = node.parent.node_id
             if "handle" in node.node_label:
                 node_dict["is_handle"] = True
+# Xiao : 新增/修改：以下 8 行为相对 Jianghanxiao/RoboEXP 的改动。
                 node_dict["handle_center"] = getattr(node, "handle_center", None)
                 node_dict["handle_direction"] = getattr(node, "handle_direction", None)
                 node_dict["open_direction"] = getattr(node, "open_direction", None)

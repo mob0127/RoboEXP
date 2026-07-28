@@ -6,6 +6,7 @@ class MyGroundingSegment:
     def __init__(
         self,
         # Parameters for SAM
+# Xiao : 新增/修改：以下 2 行为相对 Jianghanxiao/RoboEXP 的改动。
         use_sam_hq=False,
         sam_checkpoint_path="pretrained_models/sam_vit_b_01ec64.pth",
         sam_hq_checkpoint_path="pretrained_models/sam_hq_vit_h.pth",

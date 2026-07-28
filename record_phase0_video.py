@@ -1,3 +1,4 @@
+# Xiao : 新增文件，用于本仓库对上游的扩展。
 """
 Record a demonstration video of Phase 0 PR2 kitchen mapping.
 Layout: left=fixed global camera, right=head camera + scrolling HUD.

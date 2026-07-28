@@ -1,0 +1,5 @@
+digraph {
+	table_0 [label=table color=lightblue2 shape=egg style=filled]
+	cup_0 [label=cup color=lightblue2 shape=egg style=filled]
+	table_0 -> cup_0 [label=on]
+}

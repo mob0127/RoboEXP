@@ -1,3 +1,4 @@
+# Xiao : 新增文件，用于本仓库对上游的扩展。
 """Generate a Phase 0 validation video showing perception results on PyBullet images."""
 import sys
 import os

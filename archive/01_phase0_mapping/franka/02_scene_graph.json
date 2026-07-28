@@ -1,0 +1,29 @@
+{
+  "nodes": {
+    "table_0": {
+      "label": "table",
+      "explored": true,
+      "parent": null,
+      "parent_relation": null
+    },
+    "vegetable_0": {
+      "label": "vegetable",
+      "explored": false,
+      "parent": "table_0",
+      "parent_relation": "on"
+    },
+    "bottle_0": {
+      "label": "bottle",
+      "explored": false,
+      "parent": "table_0",
+      "parent_relation": "on"
+    },
+    "counter_0": {
+      "label": "counter",
+      "explored": false,
+      "parent": "table_0",
+      "parent_relation": "on"
+    }
+  },
+  "relations": []
+}

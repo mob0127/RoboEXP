@@ -1,0 +1,256 @@
+{
+  "nodes": {
+    "table_0": {
+      "label": "table",
+      "explored": true,
+      "parent": null,
+      "parent_relation": null
+    },
+    "bottle_0": {
+      "label": "bottle",
+      "explored": false,
+      "parent": "table_0",
+      "parent_relation": "on"
+    },
+    "bottle_1": {
+      "label": "bottle",
+      "explored": false,
+      "parent": "table_0",
+      "parent_relation": "on"
+    },
+    "pot_0": {
+      "label": "pot",
+      "explored": false,
+      "parent": "table_0",
+      "parent_relation": "on"
+    },
+    "drawer_0": {
+      "label": "drawer",
+      "explored": false,
+      "parent": "table_0",
+      "parent_relation": "on"
+    },
+    "counter_0": {
+      "label": "counter",
+      "explored": false,
+      "parent": "table_0",
+      "parent_relation": "on"
+    },
+    "bottle_2": {
+      "label": "bottle",
+      "explored": false,
+      "parent": "table_0",
+      "parent_relation": "on"
+    },
+    "bottle_3": {
+      "label": "bottle",
+      "explored": false,
+      "parent": "table_0",
+      "parent_relation": "on"
+    },
+    "counter_1": {
+      "label": "counter",
+      "explored": false,
+      "parent": "table_0",
+      "parent_relation": "on"
+    },
+    "pot_1": {
+      "label": "pot",
+      "explored": false,
+      "parent": "counter_0",
+      "parent_relation": "on"
+    },
+    "pot_2": {
+      "label": "pot",
+      "explored": false,
+      "parent": "table_0",
+      "parent_relation": "on"
+    },
+    "drawer_1": {
+      "label": "drawer",
+      "explored": false,
+      "parent": "table_0",
+      "parent_relation": "on"
+    },
+    "bottle_4": {
+      "label": "bottle",
+      "explored": false,
+      "parent": "table_0",
+      "parent_relation": "on"
+    },
+    "bottle_5": {
+      "label": "bottle",
+      "explored": false,
+      "parent": "table_0",
+      "parent_relation": "on"
+    },
+    "counter_2": {
+      "label": "counter",
+      "explored": false,
+      "parent": "table_0",
+      "parent_relation": "on"
+    },
+    "bottle_6": {
+      "label": "bottle",
+      "explored": false,
+      "parent": "table_0",
+      "parent_relation": "on"
+    },
+    "bottle_7": {
+      "label": "bottle",
+      "explored": false,
+      "parent": "table_0",
+      "parent_relation": "on"
+    },
+    "pot_3": {
+      "label": "pot",
+      "explored": false,
+      "parent": "table_0",
+      "parent_relation": "on"
+    },
+    "door_0": {
+      "label": "door",
+      "explored": false,
+      "parent": "table_0",
+      "parent_relation": "on"
+    },
+    "vegetable_0": {
+      "label": "vegetable",
+      "explored": false,
+      "parent": "table_0",
+      "parent_relation": "on"
+    },
+    "counter_3": {
+      "label": "counter",
+      "explored": false,
+      "parent": "table_0",
+      "parent_relation": "on"
+    },
+    "door_1": {
+      "label": "door",
+      "explored": false,
+      "parent": "table_0",
+      "parent_relation": "on"
+    },
+    "bottle_8": {
+      "label": "bottle",
+      "explored": false,
+      "parent": "table_0",
+      "parent_relation": "on"
+    },
+    "bottle_9": {
+      "label": "bottle",
+      "explored": false,
+      "parent": "table_0",
+      "parent_relation": "on"
+    },
+    "door_2": {
+      "label": "door",
+      "explored": false,
+      "parent": "table_0",
+      "parent_relation": "on"
+    },
+    "bowl_0": {
+      "label": "bowl",
+      "explored": false,
+      "parent": "table_0",
+      "parent_relation": "on"
+    },
+    "pan_0": {
+      "label": "pan",
+      "explored": false,
+      "parent": "table_0",
+      "parent_relation": "on"
+    },
+    "drawer_2": {
+      "label": "drawer",
+      "explored": false,
+      "parent": "table_0",
+      "parent_relation": "on"
+    },
+    "door_3": {
+      "label": "door",
+      "explored": false,
+      "parent": "table_0",
+      "parent_relation": "on"
+    },
+    "oven_gt_0": {
+      "label": "oven",
+      "explored": false,
+      "parent": "table_0",
+      "parent_relation": "on"
+    },
+    "dishwasher_gt_0": {
+      "label": "dishwasher",
+      "explored": false,
+      "parent": "table_0",
+      "parent_relation": "on"
+    },
+    "counter_gt_0": {
+      "label": "counter",
+      "explored": false,
+      "parent": "table_0",
+      "parent_relation": "on"
+    },
+    "microwave_gt_0": {
+      "label": "microwave",
+      "explored": false,
+      "parent": "table_0",
+      "parent_relation": "on"
+    },
+    "shelf_gt_0": {
+      "label": "shelf",
+      "explored": false,
+      "parent": "table_0",
+      "parent_relation": "on"
+    },
+    "cabinet_gt_0": {
+      "label": "cabinet",
+      "explored": false,
+      "parent": "table_0",
+      "parent_relation": "on"
+    },
+    "handle_door_1_0": {
+      "label": "door_handle",
+      "explored": true,
+      "parent": "microwave_gt_0",
+      "parent_relation": "belong"
+    },
+    "handle_door_2_0": {
+      "label": "door_handle",
+      "explored": true,
+      "parent": "cabinet_gt_0",
+      "parent_relation": "belong"
+    },
+    "handle_door_6_0": {
+      "label": "door_handle",
+      "explored": true,
+      "parent": "cabinet_gt_0",
+      "parent_relation": "belong"
+    },
+    "handle_door_10_0": {
+      "label": "door_handle",
+      "explored": true,
+      "parent": "cabinet_gt_0",
+      "parent_relation": "belong"
+    },
+    "handle_drawer_1_0": {
+      "label": "drawer_handle",
+      "explored": true,
+      "parent": "bottle_0",
+      "parent_relation": "belong"
+    },
+    "bottle_10": {
+      "label": "bottle",
+      "explored": false,
+      "parent": "open_0",
+      "parent_relation": "inside"
+    },
+    "apple_0": {
+      "label": "apple",
+      "explored": false,
+      "parent": "open_1",
+      "parent_relation": "inside"
+    }
+  }
+}

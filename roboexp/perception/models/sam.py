@@ -1,11 +1,13 @@
 from segment_anything import (
     build_sam,
+# Xiao : 新增/修改：以下 2 行为相对 Jianghanxiao/RoboEXP 的改动。
     build_sam_vit_b,
     build_sam_vit_l,
     SamAutomaticMaskGenerator,
     SamPredictor,
 )
 import torch
+# Xiao : 新增/修改：以下 1 行为相对 Jianghanxiao/RoboEXP 的改动。
 import os
 
 
@@ -22,9 +24,11 @@ class MySAM:
         self.device = device
         # Build the model
         if use_sam_hq:
+# Xiao : 新增/修改：以下 1 行为相对 Jianghanxiao/RoboEXP 的改动。
             from segment_anything import build_sam_hq
             model = build_sam_hq(checkpoint=sam_hq_checkpoint_path)
         else:
+# Xiao : 新增/修改：以下 8 行为相对 Jianghanxiao/RoboEXP 的改动。
             # Auto-detect SAM variant from checkpoint filename
             ckpt_name = os.path.basename(sam_checkpoint_path) if sam_checkpoint_path else ""
             if "vit_b" in ckpt_name.lower():

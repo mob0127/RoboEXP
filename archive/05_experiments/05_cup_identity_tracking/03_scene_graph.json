@@ -1,0 +1,11 @@
+{
+  "table_0": {
+    "label": "table",
+    "type": "object"
+  },
+  "cup_0": {
+    "label": "cup",
+    "type": "object",
+    "parent": "table_0"
+  }
+}

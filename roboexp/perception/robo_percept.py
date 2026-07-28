@@ -1,4 +1,5 @@
 from .models import MyGroundingSegment, MyDenseClip
+# Xiao : 新增/修改：以下 1 行为相对 Jianghanxiao/RoboEXP 的改动。
 from .pybullet_fallback import PyBulletFallbackDetector
 from roboexp.utils import display_image
 import torch
@@ -57,6 +58,7 @@ class RoboPercept:
         # Clean the GPU memory
         if self.lazy_loading:
             del my_grounding_sam
+# Xiao : 新增/修改：以下 2 行为相对 Jianghanxiao/RoboEXP 的改动。
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
         return pred_boxes, pred_phrases, pred_masks
@@ -71,6 +73,7 @@ class RoboPercept:
         # Clean the GPU memory
         if self.lazy_loading:
             del my_dense_clip
+# Xiao : 新增/修改：以下 2 行为相对 Jianghanxiao/RoboEXP 的改动。
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
         if not per_mask:
@@ -90,9 +93,11 @@ class RoboPercept:
         # Clean the GPU memory
         if self.lazy_loading:
             del my_dense_clipobservations
+# Xiao : 新增/修改：以下 2 行为相对 Jianghanxiao/RoboEXP 的改动。
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
         return text_feats.numpy()
+# Xiao : 新增/修改：以下 23 行为相对 Jianghanxiao/RoboEXP 的改动。
 
     def get_attributes_with_fallback(
         self, observations, fallback_detector, target_labels,

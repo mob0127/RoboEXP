@@ -43,6 +43,7 @@ class ObjectNode(Node):
         self.instance = instance
         self.voxel_indexes = instance.voxel_indexes
 
+# Xiao : 新增/修改：以下 11 行为相对 Jianghanxiao/RoboEXP 的改动。
     def update_parent(self, new_parent, parent_relation=None):
         """Move this object node to a new parent in the scene graph."""
         if self.parent is not None:

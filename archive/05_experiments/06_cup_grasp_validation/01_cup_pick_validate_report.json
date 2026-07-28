@@ -1,0 +1,67 @@
+{
+  "cup_start_position": [
+    0.6,
+    0.0,
+    1.435
+  ],
+  "tests": {
+    "success": {
+      "body": 17,
+      "attached": true,
+      "before_position": [
+        0.6,
+        0.0,
+        1.435
+      ],
+      "after_position": [
+        0.6,
+        0.0,
+        1.6249972023986956
+      ],
+      "before_support_z": 1.335,
+      "after_support_z": 1.5249972023986955,
+      "before_up_dot": 1.0,
+      "after_up_dot": 1.0,
+      "outcome": "success"
+    },
+    "missed": {
+      "body": 17,
+      "attached": false,
+      "before_position": [
+        0.6,
+        0.0,
+        1.435
+      ],
+      "after_position": [
+        0.6,
+        0.0,
+        1.435
+      ],
+      "before_support_z": 1.335,
+      "after_support_z": 1.335,
+      "before_up_dot": 1.0,
+      "after_up_dot": 1.0,
+      "outcome": "missed"
+    },
+    "tipped": {
+      "body": 17,
+      "attached": false,
+      "before_position": [
+        0.6,
+        0.0,
+        1.435
+      ],
+      "after_position": [
+        0.7219026169519837,
+        -0.05113728473026719,
+        1.4593802324892096
+      ],
+      "before_support_z": 1.335,
+      "after_support_z": 1.3208662025881397,
+      "before_up_dot": 1.0,
+      "after_up_dot": 0.35280070629231913,
+      "outcome": "tipped"
+    }
+  },
+  "all_passed": true
+}

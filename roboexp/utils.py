@@ -323,6 +323,7 @@ def _init_low_level_memory(lower_bound, higher_bound, voxel_size, voxel_num):
         return indexes
 
     def index_to_voxel(indexes):
+# Xiao : 新增/修改：以下 2 行为相对 Jianghanxiao/RoboEXP 的改动。
         if isinstance(indexes, (list, set, tuple)):
             indexes = np.array(list(indexes))
         # The index is in numpy array with shape (...,)

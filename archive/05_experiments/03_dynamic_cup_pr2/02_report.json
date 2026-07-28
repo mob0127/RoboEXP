@@ -1,0 +1,22 @@
+{
+  "video": "/home/jx/kitchen/RoboEXP/experiments/outputs/dynamic_demo_pr2/dynamic_demo_pr2.mp4",
+  "identity_preserved": true,
+  "cup_before": {
+    "node_id": "cup_0",
+    "instance_id": "cup_0_instance",
+    "parent": "table_0",
+    "parent_relation": "on"
+  },
+  "cup_after": {
+    "node_id": "cup_0",
+    "instance_id": "cup_0_instance",
+    "parent": "table_0",
+    "parent_relation": "on"
+  },
+  "grasp_validation": {
+    "success": "success",
+    "missed": "missed",
+    "tipped": "tipped"
+  },
+  "num_frames": 16
+}

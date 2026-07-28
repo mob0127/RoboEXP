@@ -1,3 +1,4 @@
+# Xiao : 新增文件，用于本仓库对上游的扩展。
 """
 Phase 0 Validation: Graft RoboEXP perception+memory onto kitchen-worlds PyBullet.
 

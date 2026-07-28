@@ -1,0 +1,9 @@
+digraph {
+	table_0 [label=table color=lightblue2 shape=egg style=filled]
+	vegetable_0 [label=vegetable color=lightblue2 shape=egg style=filled]
+	table_0 -> vegetable_0 [label=on]
+	bottle_0 [label=bottle color=lightblue2 shape=egg style=filled]
+	table_0 -> bottle_0 [label=on]
+	counter_0 [label=counter color=lightblue2 shape=egg style=filled]
+	table_0 -> counter_0 [label=on]
+}
